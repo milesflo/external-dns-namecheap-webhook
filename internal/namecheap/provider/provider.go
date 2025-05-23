@@ -33,5 +33,25 @@ func (p namecheapProvider) ApplyChanges(ctx context.Context, changes *plan.Chang
 }
 
 func (p namecheapProvider) Records(ctx context.Context) ([]*endpoint.Endpoint, error) {
-	return nil, errors.New("not implemented")
+	zones, err := p.client.ListZones(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var endpoints []*endpoint.Endpoint
+
+	for _, zone := range zones {
+		records, err := p.client.ListRecordSets(ctx, zone.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, record := range records {
+			ep := endpoint.NewEndpointWithTTL(zone.Name, record.Type, endpoint.TTL(record.TTL), record.Data...)
+
+			endpoints = append(endpoints, ep)
+		}
+	}
+
+	return endpoints, nil
 }

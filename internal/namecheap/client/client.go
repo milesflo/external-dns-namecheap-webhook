@@ -33,6 +33,7 @@ type Zone struct {
 	ID        string
 	Name      string
 	IsPrivate bool
+	TTL       string
 }
 
 type NamecheapClient struct {
@@ -105,7 +106,24 @@ func (c *NamecheapClient) ListZones(ctx context.Context) ([]Zone, error) {
 }
 
 func (c *NamecheapClient) ListRecordSets(ctx context.Context, zoneID string) ([]RecordSet, error) {
-	return nil, errors.New("not implemented")
+
+	hosts, err := c.sdk.DomainsDNS.GetHosts(zoneID)
+	if err != nil {
+		return nil, err
+	}
+
+	records := []RecordSet{}
+
+	for _, host := range *hosts.DomainDNSGetHostsResult.Hosts {
+		record := RecordSet{
+			Name: *host.Name,
+			Type: *host.Type,
+			TTL:  int64(*host.TTL),
+		}
+
+		records = append(records, record)
+	}
+	return records, nil
 }
 
 func (c *NamecheapClient) UpsertRecordSets(ctx context.Context, req UpsertRequest) error {
