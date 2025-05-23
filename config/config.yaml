@@ -1,5 +1,6 @@
-folder_id: ""
-auth_key_file: ""
+username: ""
+api_key: ""
+client_ip: "1.2.3.4"
 
 server:
   webhook_port: 8888

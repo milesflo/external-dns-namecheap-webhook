@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	FolderID    string       `mapstructure:"folder_id"`
-	AuthKeyFile string       `mapstructure:"auth_key_file"`
-	Server      ServerConfig `mapstructure:"server"`
+	Username string       `mapstructure:"username"`
+	APIKey   string       `mapstructure:"api_key"`
+	ClientIP string       `mapstructure:"client_ip"`
+	Server   ServerConfig `mapstructure:"server"`
 }
 
 type ServerConfig struct {
@@ -29,18 +30,22 @@ func LoadConfig() (*Config, error) {
 	viper.AutomaticEnv()
 
 	// Define CLI flags
-	pflag.String("folder-id", "", "Yandex Cloud folder ID")
-	pflag.String("auth-key-file", "/etc/kubernetes/key.json", "Path to Yandex Cloud service account key file")
+	pflag.String("username", "", "Namecheap username")
+	pflag.String("api-key", "", "Namecheap api key")
+	pflag.String("client-ip", "", "Allowlisted IP you are calling from")
 	pflag.Int("webhook-port", 8888, "Port for webhook server")
 	pflag.Int("health-port", 8080, "Port for health check server")
 	pflag.Parse()
 
 	// Bind CLI flags to Viper
-	if err := viper.BindPFlag("folder_id", pflag.Lookup("folder-id")); err != nil {
-		return nil, fmt.Errorf("error binding folder-id flag: %v", err)
+	if err := viper.BindPFlag("username", pflag.Lookup("username")); err != nil {
+		return nil, fmt.Errorf("error binding username flag: %v", err)
 	}
-	if err := viper.BindPFlag("auth_key_file", pflag.Lookup("auth-key-file")); err != nil {
-		return nil, fmt.Errorf("error binding auth-key-file flag: %v", err)
+	if err := viper.BindPFlag("api_key", pflag.Lookup("api-key")); err != nil {
+		return nil, fmt.Errorf("error binding api-key flag: %v", err)
+	}
+	if err := viper.BindPFlag("client_ip", pflag.Lookup("client-ip")); err != nil {
+		return nil, fmt.Errorf("error binding client-ip flag: %v", err)
 	}
 	if err := viper.BindPFlag("server.webhook_port", pflag.Lookup("webhook-port")); err != nil {
 		return nil, fmt.Errorf("error binding webhook-port flag: %v", err)
@@ -66,12 +71,15 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Validate required fields
-	if config.FolderID == "" {
-		return nil, fmt.Errorf("folder_id configuration is required")
+	if config.Username == "" {
+		return nil, fmt.Errorf("username configuration is required")
 	}
 
-	if config.AuthKeyFile == "" {
-		return nil, fmt.Errorf("auth_key_file configuration is required")
+	if config.APIKey == "" {
+		return nil, fmt.Errorf("api_key configuration is required")
+	}
+	if config.ClientIP == "" {
+		return nil, fmt.Errorf("client_ip configuration is required")
 	}
 
 	return &config, nil

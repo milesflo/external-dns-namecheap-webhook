@@ -9,6 +9,9 @@ import (
 
 	"github.com/milesflo/external-dns-namecheap-webhook/internal/config"
 
+	"github.com/milesflo/external-dns-namecheap-webhook/internal/namecheap/client"
+	"github.com/milesflo/external-dns-namecheap-webhook/internal/namecheap/provider"
+
 	"sigs.k8s.io/external-dns/endpoint"
 	"sigs.k8s.io/external-dns/provider/webhook/api"
 )
@@ -30,7 +33,7 @@ func main() {
 		httpApiStarted = true
 	}()
 
-	log.Infof("Using folder ID: %s", cfg.FolderID)
+	log.Infof("Using username: %s", cfg.Username)
 
 	m := http.NewServeMux()
 
@@ -55,7 +58,7 @@ func main() {
 			log.Fatalf("health listener stopped: %s", err)
 		}
 	}()
-	client, err := client.NewNamecheapClient(cfg.FolderID, cfg.AuthKeyFile)
+	client, err := client.NewNamecheapClient(cfg.Username, cfg.APIKey, cfg.ClientIP, false)
 	if err != nil {
 		log.Fatalf("NewNamecheapClient: %v", err)
 	}
