@@ -96,6 +96,7 @@ func (c *NamecheapClient) ListZones(ctx context.Context) ([]Zone, error) {
 				IsPrivate: *domain.IsLocked,
 			})
 		}
+		page++
 		// If ceiling is larger than total items, break
 		if *res.Paging.CurrentPage**res.Paging.PageSize > *res.Paging.TotalItems {
 			break
