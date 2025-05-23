@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 
 	"github.com/milesflo/external-dns-namecheap-webhook/internal/namecheap/client"
 	"sigs.k8s.io/external-dns/endpoint"
@@ -29,7 +28,32 @@ func NewNamecheapProvider(domainFilter endpoint.DomainFilter, dryRun bool, clien
 }
 
 func (p namecheapProvider) ApplyChanges(ctx context.Context, changes *plan.Changes) error {
-	return errors.New("not implemented")
+
+	recordsToCreate := client.UpsertRequest{}
+
+	for _, ep := range changes.UpdateNew {
+		for _, target := range ep.Targets {
+			recordsToCreate.Creates = append(recordsToCreate.Creates, client.RecordSet{
+				Name:    ep.DNSName,
+				Type:    ep.RecordType,
+				TTL:     int(ep.RecordTTL),
+				Address: target,
+			})
+		}
+	}
+
+	for _, ep := range changes.Create {
+		for _, target := range ep.Targets {
+			recordsToCreate.Creates = append(recordsToCreate.Creates, client.RecordSet{
+				Name:    ep.DNSName,
+				Type:    ep.RecordType,
+				TTL:     int(ep.RecordTTL),
+				Address: target,
+			})
+		}
+	}
+
+	return p.client.UpsertRecordSets(ctx, recordsToCreate)
 }
 
 func (p namecheapProvider) Records(ctx context.Context) ([]*endpoint.Endpoint, error) {

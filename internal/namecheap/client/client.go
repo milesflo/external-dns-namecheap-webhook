@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/netip"
 
@@ -16,24 +15,22 @@ type NamecheapDNSClient interface {
 }
 
 type RecordSet struct {
-	Name string
-	Type string
-	TTL  int64
-	Data []string
+	Name    string
+	Type    string
+	TTL     int
+	MXInfo  int
+	Address string
+	Data    []string
 }
 
 type UpsertRequest struct {
-	DnsZoneID    string
-	Deletions    []RecordSet
-	Replacements []RecordSet
-	Merges       []RecordSet
+	DnsZoneID string
+	Creates   []RecordSet
 }
 
 type Zone struct {
-	ID        string
-	Name      string
-	IsPrivate bool
-	TTL       string
+	ID   string
+	Name string
 }
 
 type NamecheapClient struct {
@@ -91,9 +88,8 @@ func (c *NamecheapClient) ListZones(ctx context.Context) ([]Zone, error) {
 		}
 		for _, domain := range *res.Domains {
 			zones = append(zones, Zone{
-				ID:        *domain.ID,
-				Name:      *domain.Name,
-				IsPrivate: *domain.IsLocked,
+				ID:   *domain.ID,
+				Name: *domain.Name,
 			})
 		}
 		page++
@@ -117,9 +113,11 @@ func (c *NamecheapClient) ListRecordSets(ctx context.Context, zoneID string) ([]
 
 	for _, host := range *hosts.DomainDNSGetHostsResult.Hosts {
 		record := RecordSet{
-			Name: *host.Name,
-			Type: *host.Type,
-			TTL:  int64(*host.TTL),
+			Name:    *host.Name,
+			Type:    *host.Type,
+			TTL:     *host.TTL,
+			MXInfo:  *host.MXPref,
+			Address: *host.Address,
 		}
 
 		records = append(records, record)
@@ -128,5 +126,23 @@ func (c *NamecheapClient) ListRecordSets(ctx context.Context, zoneID string) ([]
 }
 
 func (c *NamecheapClient) UpsertRecordSets(ctx context.Context, req UpsertRequest) error {
-	return errors.New("not implemented")
+	domain := req.DnsZoneID
+	var records []sdk.DomainsDNSHostRecord
+
+	for _, record := range req.Creates {
+		MXInfo := uint8(record.MXInfo)
+		records = append(records, sdk.DomainsDNSHostRecord{
+			HostName:   &record.Name,
+			RecordType: &record.Type,
+			Address:    &record.Address,
+			TTL:        &record.TTL,
+			MXPref:     &MXInfo,
+		})
+	}
+	_, err := c.sdk.DomainsDNS.SetHosts(&sdk.DomainsDNSSetHostsArgs{
+		Domain:  &domain,
+		Records: &records,
+	})
+
+	return err
 }
