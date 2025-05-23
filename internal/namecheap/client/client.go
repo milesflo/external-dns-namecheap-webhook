@@ -18,11 +18,13 @@ type RecordSet struct {
 	Name    string
 	Type    string
 	TTL     int
-	MXInfo  int
+	MXInfo  int // TODO(milesflo): This is not used down the line. Evaluate if needed.
 	Address string
 	Data    []string
 }
 
+// TODO(milesflo): Is this even necessary here? Super verbose, lot of repeated fields.
+// Might be better as a tree-type struct... DNS is heirarchical, after all.
 type UpsertRequest struct {
 	DnsZoneID string
 	Creates   []RecordSet
@@ -53,6 +55,7 @@ func NewNamecheapClient(username, apiKey, clientIp string, useSandbox bool) (*Na
 		return nil, err
 	}
 
+	// TODO(milesflo): Need a way to mock this
 	client := sdk.NewClient(&sdk.ClientOptions{
 		UserName:   username,
 		ApiUser:    username,
@@ -95,6 +98,8 @@ func (c *NamecheapClient) ListZones(ctx context.Context) ([]Zone, error) {
 		page++
 		// If ceiling is larger than total items, break
 		if *res.Paging.CurrentPage**res.Paging.PageSize > *res.Paging.TotalItems {
+
+			// TODO(milesflo): Test me.
 			break
 		}
 	}
