@@ -58,13 +58,16 @@ func main() {
 			log.Fatalf("health listener stopped: %s", err)
 		}
 	}()
-	client, err := client.NewNamecheapClient(cfg.Username, cfg.APIKey, cfg.ClientIP, false)
+
+	dryRun := false
+
+	client, err := client.NewNamecheapClient(cfg.Username, cfg.APIKey, cfg.ClientIP, cfg.UseSandbox)
 	if err != nil {
 		log.Fatalf("NewNamecheapClient: %v", err)
 	}
 
 	epf := endpoint.NewDomainFilter([]string{})
-	provider := provider.NewNamecheapProvider(epf, false, client)
+	provider := provider.NewNamecheapProvider(epf, dryRun, client)
 	if err != nil {
 		log.Fatalf("NewNamecheapProvider: %v", err)
 	}

@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Username string       `mapstructure:"username"`
-	APIKey   string       `mapstructure:"api_key"`
-	ClientIP string       `mapstructure:"client_ip"`
-	Server   ServerConfig `mapstructure:"server"`
+	Username   string       `mapstructure:"username"`
+	APIKey     string       `mapstructure:"api_key"`
+	ClientIP   string       `mapstructure:"client_ip"`
+	UseSandbox bool         `mapstructure:"use_sandbox"`
+	Server     ServerConfig `mapstructure:"server"`
 }
 
 type ServerConfig struct {
@@ -33,6 +34,7 @@ func LoadConfig() (*Config, error) {
 	pflag.String("username", "", "Namecheap username")
 	pflag.String("api-key", "", "Namecheap api key")
 	pflag.String("client-ip", "", "Allowlisted IP you are calling from")
+	pflag.Bool("use-sandbox", false, "Optional: Target the Namecheap sandbox instance")
 	pflag.Int("webhook-port", 8888, "Port for webhook server")
 	pflag.Int("health-port", 8080, "Port for health check server")
 	pflag.Parse()
@@ -46,6 +48,9 @@ func LoadConfig() (*Config, error) {
 	}
 	if err := viper.BindPFlag("client_ip", pflag.Lookup("client-ip")); err != nil {
 		return nil, fmt.Errorf("error binding client-ip flag: %v", err)
+	}
+	if err := viper.BindPFlag("use_sandbox", pflag.Lookup("use-sandbox")); err != nil {
+		return nil, fmt.Errorf("error binding use-sandbox flag: %v", err)
 	}
 	if err := viper.BindPFlag("server.webhook_port", pflag.Lookup("webhook-port")); err != nil {
 		return nil, fmt.Errorf("error binding webhook-port flag: %v", err)
